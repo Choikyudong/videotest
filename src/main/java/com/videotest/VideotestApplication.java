@@ -4,10 +4,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.core.io.Resource;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
 @SpringBootApplication
@@ -23,8 +26,32 @@ public class VideotestApplication {
 		return service.getVideo(title);
 	}
 
-	public static void main(String[] args) {
+	@GetMapping(value = "hello")
+	public Mono<String> getViedo() {
+		return Mono.just("안녕");
+	}
+
+	// 전통적인 방법
+	@GetMapping("/sync")
+	public ResponseEntity<String> syncRequest() {
+		RestTemplate restTemplate = new RestTemplate();
+		String response = restTemplate.getForObject("https://naver.com", String.class);
+		return ResponseEntity.ok(response);
+	}
+
+	// 리액티브 방법
+	@GetMapping("/reactive")
+	public Mono<ResponseEntity<String>> reactiveRequest() {
+		WebClient webClient = WebClient.create();
+		return webClient.get()
+				.uri("https://naver.com")
+				.retrieve()
+				.toEntity(String.class);
+	}
+
+	public static void main(String[] args) throws InterruptedException {
 		SpringApplication.run(VideotestApplication.class, args);
+		new RtmpServer().start();
 	}
 
 }
