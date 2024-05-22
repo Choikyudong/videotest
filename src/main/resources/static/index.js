@@ -1,18 +1,23 @@
 const socket = new WebSocket("ws://localhost:8080/ws/chat");
 
+let socketUserInfo = {
+    messageType : ''
+}
 function testSend() {
     let data = {
-        messageType : 'ENTER',
+        messageType : socketUserInfo.messageType,
         chatRoomId : 1,
         senderId : 1,
-        message : document.querySelector('#socket-text-area').value,
+        message : document.querySelector('#socket-input-area').value,
     }
     socket.send(JSON.stringify(data));
-    document.querySelector('#socket-text-area').value = ''; // 전송 후 초기화
+    socketUserInfo.messageType = 'TALK'
+    document.querySelector('#socket-input-area').value = ''; // 전송 후 초기화
 }
 
 socket.onopen = function() {
-    // todo : 소켓 열렸을 떄
+    socketUserInfo.messageType = 'ENTER'
+    console.log('소켓 열림');
 };
 
 // 소켓을 통해 메시지를 받을 경우
@@ -21,10 +26,26 @@ socket.onmessage = function(event) {
     if (!eventResult.message) {
         return;
     }
-    document.querySelector('#text-area').innerHTML += '<p>' + eventResult.message + '</p>';
-
+    const msg = document.createElement('li');
+    msg.textContent = eventResult.message;
+    document.querySelector('#msg-area').appendChild(msg);
 };
 
 socket.onclose = function(event) {
-    // todo : 소켓 닫힐 떄
+    console.log('소켓 닫음');
+};
+
+
+// 방송 이벤트 관련
+const eventSource = new EventSource('http://localhost:8080/streamer/start');
+
+eventSource.onmessage = function(event) {
+    const notifications = document.getElementById('notify-area');
+    const notification = document.createElement('li');
+    notification.textContent = event.data;
+    notifications.appendChild(notification);
+};
+
+eventSource.onerror = function(event) {
+    console.error("SSE connection error:", event);
 };
