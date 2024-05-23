@@ -12,26 +12,27 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 // 송신서버
 public class RtmpServer {
 
-	public void start() throws InterruptedException {
-		EventLoopGroup bossGroup = new NioEventLoopGroup(1);
+	public void start() {
+		EventLoopGroup bossGroup = new NioEventLoopGroup();
 		EventLoopGroup workerGroup = new NioEventLoopGroup();
 		try {
 			ServerBootstrap b = new ServerBootstrap();
 			b.group(bossGroup, workerGroup)
-					.channel(NioServerSocketChannel.class)
-					.childHandler(new ChannelInitializer<SocketChannel>() {
-						@Override
-						public void initChannel(SocketChannel ch) throws Exception {
-							ch.pipeline().addLast(new RtmpServerHandler());
-						}
-					})
-					.option(ChannelOption.SO_BACKLOG, 128)
-					.childOption(ChannelOption.SO_KEEPALIVE, true);
+			.channel(NioServerSocketChannel.class)
+			.childHandler(new ChannelInitializer<SocketChannel>() {
+				@Override
+				public void initChannel(SocketChannel ch) {
+					ch.pipeline().addLast(new RtmpServerHandler());
+				}
+			})
+			.option(ChannelOption.SO_BACKLOG, 128)
+			.childOption(ChannelOption.SO_KEEPALIVE, true);
 
-			int port = 1935;
-			ChannelFuture f = b.bind(port).sync();
+			ChannelFuture f = b.bind(1935).sync();
 			f.channel().closeFuture().sync();
-		} finally {
+		} catch (Exception e){
+			System.out.println(e.getMessage());
+		}  finally {
 			workerGroup.shutdownGracefully();
 			bossGroup.shutdownGracefully();
 		}
